@@ -282,9 +282,9 @@ class OthelloFrame(wx.Frame):
     def draw_chess(self):
         dc = wx.ClientDC(self)
         self.disable_buttons()
-        for x, y in np.ndindex(self.board.chess[4:self.n + 4, 4:self.n + 4].shape):
-            if self.board.chess[y + 4, x + 4] > 0:
-                dc.SetBrush(wx.Brush(wx.BLACK if self.board.chess[y + 4, x + 4] == 1 else wx.WHITE))
+        for x, y in np.ndindex(self.board.chess[0:self.n, 0:self.n].shape):
+            if self.board.chess[y, x] > 0:
+                dc.SetBrush(wx.Brush(wx.BLACK if self.board.chess[y, x] == 1 else wx.WHITE))
                 dc.DrawCircle(self.grid_position_x + x * self.block_length,
                               self.grid_position_y + y * self.block_length, self.piece_radius)
         if self.current_move > 0:
@@ -306,13 +306,11 @@ class OthelloFrame(wx.Frame):
         self.moves = self.current_move
         self.chess_record.append((x, y))
         self.draw_chess()
-        if self.moves > 8:
-            end, winner = self.board.has_ended()
-            if end:
-                self.disable_buttons()
-                self.draw_banner(winner)
-            return end
-        return False
+        end, winner = self.board.has_ended()
+        if end:
+            self.disable_buttons()
+            self.draw_banner(winner)
+        return end
 
     def draw_banner(self, result: int):
         w = 216
@@ -345,7 +343,7 @@ class OthelloFrame(wx.Frame):
                     x = int(x / self.block_length)
                     y = int(y / self.block_length)
                     if 0 <= x < self.n and 0 <= y < self.n:
-                        if self.board.chess[y + 4, x + 4] == 0:
+                        if self.board.chess[y, x] == 0:
                             if self.mcts_player is not None:
                                 self.analysis_button.Enable()
                                 self.black_button.Disable()

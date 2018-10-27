@@ -20,21 +20,20 @@ class Board:
         self.n = n
         self.winner = 0
         self.move_list = []
-        self.chess = np.repeat(-1, (self.n + 8) * (self.n + 8)).reshape(self.n + 8, self.n + 8)
-        self.chess[4:self.n + 4, 4:self.n + 4] = 0
+        self.chess = np.repeat(0, self.n * self.n).reshape(self.n, self.n)
 
     def initialize(self):
         self.winner = 0
         self.move_list = []
-        self.chess[4:self.n + 4, 4:self.n + 4] = 0
+        self.chess[0:self.n, 0:self.n] = 0
 
     def add_move(self, x: int, y: int):
         self.move_list.append((x, y))
-        self.chess[x + 4, y + 4] = 2 if self.get_move_number() % 2 == 0 else 1
+        self.chess[x, y] = 2 if self.get_move_number() % 2 == 0 else 1
 
     def remove_move(self):
         x, y = self.move_list.pop()
-        self.chess[x + 4, y + 4] = 0
+        self.chess[x, y] = 0
 
     def move_to_location(self, move: int) -> (int, int):
         x = self.n - move // self.n - 1
@@ -46,7 +45,7 @@ class Board:
 
     def get_available_moves(self) -> []:
         potential_move_list = []
-        for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+        for (x, y), value in np.ndenumerate(self.chess):
             if not value:
                 potential_move_list.append(self.location_to_move(x, y))
         return sorted(potential_move_list)
@@ -55,7 +54,7 @@ class Board:
         player = self.get_current_player()
         opponent = 2 if player == 1 else 1
         square_state = np.zeros((4, self.n, self.n))
-        for (x, y), value in np.ndenumerate(self.chess[4:self.n + 4, 4:self.n + 4]):
+        for (x, y), value in np.ndenumerate(self.chess):
             if value == player:
                 square_state[0][self.n - x - 1][y] = 1.0
             elif value == opponent:
@@ -73,15 +72,14 @@ class Board:
     def get_current_player(self) -> int:
         return 1 if self.get_move_number() % 2 == 0 else 2
 
-    def has_winner(self, x: int, y: int):
-        if evaluate.has_winner(self.chess, x, y):
-            self.winner = self.chess[x, y]
+    def has_winner(self):
+        self.winner = evaluate.has_winner(self.chess)
 
     def has_ended(self):
         if self.get_move_number() == 0:
             return False, -1
         x, y = self.move_list[self.get_move_number() - 1]
-        self.has_winner(x + 4, y + 4)
+        self.has_winner(x, y)
         if self.winner != 0:
             return True, self.winner
         else:
