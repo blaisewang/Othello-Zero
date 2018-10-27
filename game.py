@@ -7,7 +7,6 @@ An implementation of the game and the game board
 import numpy as np
 
 from mcts_alphaZero import MCTSPlayer
-import evaluate
 
 
 def to_list(p1: int, p2: int, n: int) -> []:
@@ -18,12 +17,12 @@ def to_list(p1: int, p2: int, n: int) -> []:
 class Board:
     def __init__(self, n: int):
         self.n = n
-        self.winner = 0
+        self.winner = -1
         self.move_list = []
         self.chess = np.repeat(0, self.n * self.n).reshape(self.n, self.n)
 
     def initialize(self):
-        self.winner = 0
+        self.winner = -1
         self.move_list = []
         self.chess[0:self.n, 0:self.n] = 0
 
@@ -73,20 +72,15 @@ class Board:
         return 1 if self.get_move_number() % 2 == 0 else 2
 
     def has_winner(self):
-        self.winner = evaluate.has_winner(self.chess)
 
-    def has_ended(self):
-        if self.get_move_number() == 0:
-            return False, -1
-        x, y = self.move_list[self.get_move_number() - 1]
-        self.has_winner(x, y)
-        if self.winner != 0:
-            return True, self.winner
-        else:
-            if self.get_move_number() == self.n * self.n:
-                return True, -1
-            else:
-                return False, -1
+        """
+        黑胜返回1
+        白胜返回2
+        平局返回0
+        未结束返回-1
+        """
+
+        return 0
 
 
 class Game:
@@ -103,11 +97,12 @@ class Game:
             move = player_in_turn.get_action(self.board)
             x, y = self.board.move_to_location(move)
             self.board.add_move(x, y)
-            has_ended, winner = self.board.has_ended()
-            if has_ended:
+            winner = self.board.has_winner()
+            if winner != -1:
+                if not winner:
+                    return winner
                 if index % 2:
-                    winner = 1 if winner == 2 else 2
-                return winner
+                    return 1 if winner == 2 else 2
 
     def start_self_play(self, player: 'MCTSPlayer', temp=1e-3):
         """ start a self-play game using a MCTS player, reuse the search tree
@@ -124,8 +119,8 @@ class Game:
             # perform a move
             x, y = self.board.move_to_location(move)
             self.board.add_move(x, y)
-            has_ended, winner = self.board.has_ended()
-            if has_ended:
+            winner = self.board.has_winner()
+            if winner != -1:
                 # winner from the perspective of the current player of each state
                 winners_z = np.zeros(len(current_players))
                 if winner != -1:

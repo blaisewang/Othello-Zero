@@ -63,8 +63,7 @@ class MCTS:
 
         action_probabilities, _ = self._policy(state)
         # Check for end of game
-        end, _ = state.has_ended()
-        if not end:
+        if state.has_winner() != -1:
             node.expand(action_probabilities)
         # Evaluate the leaf node by random roll out
         leaf_value = self._evaluate_roll_out(state)
@@ -79,13 +78,13 @@ class MCTS:
         winner = -1
         player = state.get_current_player()
         for i in range(limit):
-            end, winner = state.has_ended()
-            if end:
+            winner = state.has_winner()
+            if winner == -1:
                 break
             max_action = max(roll_out_policy_func(state), key=itemgetter(1))[0]
             x, y = state.move_to_location(max_action)
             state.add_move(x, y)
-        if winner == -1:  # tie
+        if winner == 0:  # tie
             return 0
         else:
             return 1 if winner == player else -1

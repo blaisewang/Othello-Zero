@@ -75,8 +75,8 @@ class OthelloFrame(wx.Frame):
         wx.Frame.__init__(self, None, title="Non-Internet Reversi",
                           pos=((wx.DisplaySize()[0] - WIN_WIDTH) >> 1, (wx.DisplaySize()[1] - WIN_HEIGHT) / 2.5),
                           size=(WIN_WIDTH, WIN_HEIGHT), style=wx.CLOSE_BOX)
-        button_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False)
-        image_font = wx.Font(25, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False)
+        button_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.NORMAL, False)
+        image_font = wx.Font(25, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.NORMAL, False)
         self.undo_button = wx.Button(self, label="Undo", pos=(self.button_position_x, self.grid_position_y),
                                      size=(self.half_button_width, BUTTON_HEIGHT))
         self.redo_button = wx.Button(self, label="Redo",
@@ -125,40 +125,42 @@ class OthelloFrame(wx.Frame):
         self.initialize_user_interface()
 
     def on_undo_button_click(self, _):
-        if not self.thread.is_alive():
-            self.current_move -= 1
-            self.board.winner = 0
-            self.board.remove_move()
-            if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
-                self.current_move -= 1
-                self.board.remove_move()
-            self.redo_button.Enable()
-            self.repaint_board()
-            if self.current_move == 0:
-                self.undo_button.Disable()
-                self.replay_button.Disable()
-            if self.mcts_player is not None:
-                self.ai_hint_button.Enable()
-                self.analysis_button.Enable()
+        pass
+        # if not self.thread.is_alive():
+        #     self.current_move -= 1
+        #     self.board.winner = 0
+        #     self.board.remove_move()
+        #     if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
+        #         self.current_move -= 1
+        #         self.board.remove_move()
+        #     self.redo_button.Enable()
+        #     self.repaint_board()
+        #     if self.current_move == 0:
+        #         self.undo_button.Disable()
+        #         self.replay_button.Disable()
+        #     if self.mcts_player is not None:
+        #         self.ai_hint_button.Enable()
+        #         self.analysis_button.Enable()
 
     def on_redo_button_click(self, _):
-        if not self.thread.is_alive():
-            x, y = self.chess_record[self.current_move]
-            self.current_move += 1
-            self.board.add_move(y, x)
-            if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
-                x, y = self.chess_record[self.current_move]
-                self.current_move += 1
-                self.board.add_move(y, x)
-            self.undo_button.Enable()
-            self.replay_button.Enable()
-            self.repaint_board()
-            if self.current_move == self.moves:
-                self.redo_button.Disable()
-            if self.current_move == self.n * self.n:
-                self.ai_hint_button.Disable()
-            if self.mcts_player is not None:
-                self.analysis_button.Enable()
+        pass
+        # if not self.thread.is_alive():
+        #     x, y = self.chess_record[self.current_move]
+        #     self.current_move += 1
+        #     self.board.add_move(y, x)
+        #     if self.has_set_ai_player and (self.board.winner == 0 or self.board.get_move_number() < self.n * self.n):
+        #         x, y = self.chess_record[self.current_move]
+        #         self.current_move += 1
+        #         self.board.add_move(y, x)
+        #     self.undo_button.Enable()
+        #     self.replay_button.Enable()
+        #     self.repaint_board()
+        #     if self.current_move == self.moves:
+        #         self.redo_button.Disable()
+        #     if self.current_move == self.n * self.n:
+        #         self.ai_hint_button.Disable()
+        #     if self.mcts_player is not None:
+        #         self.analysis_button.Enable()
 
     def on_replay_button_click(self, _):
         if not self.thread.is_alive():
@@ -221,8 +223,7 @@ class OthelloFrame(wx.Frame):
 
     def disable_buttons(self):
         if self.moves > 8:
-            end, _ = self.board.has_ended()
-            if end:
+            if self.board.has_winner() != -1:
                 self.ai_hint_button.Disable()
                 self.analysis_button.Disable()
 
@@ -254,7 +255,7 @@ class OthelloFrame(wx.Frame):
                          self.grid_length + self.block_length * 2, self.grid_length + self.block_length * 2)
         dc.SetPen(wx.Pen(wx.BLACK, width=2))
         dc.DrawLineList(self.line_list)
-        dc.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, False))
+        dc.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.NORMAL, False))
         dc.DrawTextList(self.row_name_list, self.row_list)
         dc.DrawTextList(self.column_name_list, self.column_list)
         dc.SetBrush(wx.Brush(wx.BLACK))
@@ -306,11 +307,12 @@ class OthelloFrame(wx.Frame):
         self.moves = self.current_move
         self.chess_record.append((x, y))
         self.draw_chess()
-        end, winner = self.board.has_ended()
-        if end:
+        winner = self.board.has_winner()
+        if winner != -1:
             self.disable_buttons()
             self.draw_banner(winner)
-        return end
+            return True
+        return False
 
     def draw_banner(self, result: int):
         w = 216
@@ -327,13 +329,13 @@ class OthelloFrame(wx.Frame):
         dc.DrawRectangle(self.grid_position_x + ((self.grid_length - BANNER_WIDTH) >> 1),
                          self.grid_position_y + ((self.grid_length - BANNER_HEIGHT) >> 1), BANNER_WIDTH, BANNER_HEIGHT)
         dc.SetPen(wx.Pen(wx.BLACK))
-        dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, False))
+        dc.SetFont(wx.Font(40, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.NORMAL, False))
         dc.DrawText(string, x, (self.grid_position_y + ((self.grid_length - 40) >> 1)))
         self.is_banner_displayed = True
 
     def on_click(self, e):
         if not self.thread.is_alive():
-            if self.board.winner == 0:
+            if self.board.winner == -1:
                 if self.is_analysis_displayed:
                     self.repaint_board()
                 x, y = e.GetPosition()

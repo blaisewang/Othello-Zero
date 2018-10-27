@@ -56,12 +56,12 @@ class MCTS:
         # tuples p and also a score v in [-1, 1] for the current player.
         action_probabilities, leaf_value = self._policy(state)
         # Check for end of game.
-        end, winner = state.has_ended()
-        if not end:
+        winner = state.has_winner()
+        if not winner != -1:
             node.expand(action_probabilities)
         else:
             # for end state，return the "true" leaf_value
-            if winner == -1:  # tie
+            if winner == 0:  # tie
                 leaf_value = 0.0
             else:
                 leaf_value = 1.0 if winner == state.get_current_player() else -1.0
