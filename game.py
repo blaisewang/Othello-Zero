@@ -80,7 +80,7 @@ class Board:
         未结束返回-1
         """
 
-        return 0
+        return -1
 
 
 class Game:

@@ -15,7 +15,7 @@ from game import Board
 class PolicyValueNet:
     """policy-value network """
 
-    def __init__(self, n: int, net_params=None):
+    def __init__(self, n: int, model=None):
         self.n = n
         self.learning_rate = t.scalar('learning_rate')
         self.l2_const = 1e-4  # coefficient of l2 penalty
@@ -55,8 +55,8 @@ class PolicyValueNet:
         updates = lasagne.updates.adam(self.loss, params, learning_rate=self.learning_rate)
         self.train_step = theano.function([self.state_input, self.mcts_probabilities, self.winner, self.learning_rate],
                                           [self.loss, self.entropy], updates=updates, allow_input_downcast=True)
-        if net_params:
-            lasagne.layers.set_all_param_values([self.policy_net, self.value_net], net_params)
+        if model:
+            self.restore_model(model)
 
     def policy_value_func(self, board: 'Board'):
         """
@@ -69,6 +69,10 @@ class PolicyValueNet:
         act_probabilities = zip(legal_positions, act_probabilities.flatten()[legal_positions])
         return act_probabilities, value[0][0]
 
-    def get_policy_parameter(self):
-        net_params = lasagne.layers.get_all_param_values([self.policy_net, self.value_net])
-        return net_params
+    def save_model(self, model_path):
+        pass
+        # self.saver.save(self.session, model_path)
+
+    def restore_model(self, model_path):
+        pass
+        # self.saver.restore(self.session, model_path)

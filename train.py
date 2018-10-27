@@ -34,9 +34,9 @@ def data_log(string: str):
 
 
 class TrainPipeline:
-    def __init__(self, n: int, init_model=None):
+    def __init__(self, init_model=None):
         # params of the board and the game
-        self.n = n
+        self.n = 8
         self.board = Board(self.n)
         self.game = Game(self.board)
         # training params
@@ -60,8 +60,7 @@ class TrainPipeline:
         self.pure_mcts_play_out_number = 1000
         if init_model:
             # start training from an initial policy-value net
-            policy_param = pickle.load(open(init_model, 'rb'))
-            self.policy_value_net = PolicyValueNet(self.n, net_params=policy_param)
+            self.policy_value_net = PolicyValueNet(self.n, model=init_model)
         else:
             # start training from a new policy-value net
             self.policy_value_net = PolicyValueNet(self.n)
@@ -162,12 +161,11 @@ class TrainPipeline:
                     print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
                     start_time = time.time()
                     win_ratio = self.policy_evaluate()
-                    net_params = self.policy_value_net.get_policy_parameter()  # get model params
-                    pickle.dump(net_params, open('current_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+                    self.policy_value_net.save_model('./current_policy.model')
                     print_log(str(time.time() - start_time))
                     if win_ratio > self.best_win_ratio:
                         self.best_win_ratio = win_ratio
-                        pickle.dump(net_params, open('best_policy.model', 'wb'), pickle.HIGHEST_PROTOCOL)
+                        self.policy_value_net.save_model('./best_policy.model')
                         if self.best_win_ratio >= 0.8:
                             print_log("New best policy defeated " + str(
                                 self.pure_mcts_play_out_number) + " play out MCTS player ")
@@ -178,9 +176,6 @@ class TrainPipeline:
             pass
 
 
-if __name__ == '__main__':
-    length = sys.argv[1]
-    if length.isdigit():
-        sys.setrecursionlimit(256 * 256)
-        training_pipeline = TrainPipeline(int(length))
-        training_pipeline.run()
+sys.setrecursionlimit(256 * 256)
+training_pipeline = TrainPipeline()
+training_pipeline.run()
