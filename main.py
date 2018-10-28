@@ -4,7 +4,6 @@ An implementation of the game interface
 @author: Blaise Wang
 """
 
-import copy
 import os
 import pickle
 import subprocess
