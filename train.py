@@ -90,6 +90,13 @@ class TrainPipeline:
         play_data = self.get_equivalent_data(play_data)
         self.data_buffer.extend(play_data)
 
+    def collect_play_data(self, data):
+        """collect self-play data for training"""
+        play_data = list(data)
+        self.episode_length = len(play_data)
+        play_data = self.get_equivalent_data(play_data)
+        self.data_buffer.extend(play_data)
+
     def policy_update(self):
         """update the policy-value net"""
         kl = 0
@@ -141,34 +148,29 @@ class TrainPipeline:
                   format(self.pure_mcts_play_out_number, win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
 
-    def run(self):
+    def run(self, data=None):
         """run the training pipeline"""
         try:
-            for i in range(self.game_batch_number):
-                if os.path.exists("done"):
-                    break
-                start_time = time.time()
-                self.collect_self_play_data()
-                print_log(
-                    "batch i:{}, episode_len:{}, in:{}".format(i + 1 + self.last_batch_number, self.episode_length,
-                                                               time.time() - start_time))
+            if data:
+                for each_data in data:
+                    self.collect_play_data(each_data)
                 if len(self.data_buffer) > self.batch_size:
-                    loss, entropy = self.policy_update()
-                    data_log(str((i + 1 + self.last_batch_number, loss, entropy)))
-                # check the performance of the current model，and save the model params
-                if (i + 1) % self.check_freq == 0:
-                    print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
-                    # win_ratio = self.policy_evaluate()
-                    self.policy_value_net.save_model('./current_policy.model' + str(i + 1))
-                    # print_log(str(time.time() - start_time))
-                    # if win_ratio > self.best_win_ratio:
-                    #     self.best_win_ratio = win_ratio
-                    #     self.policy_value_net.save_model('./best_policy.model')
-                    #     if self.best_win_ratio >= 0.8:
-                    #         print_log("New best policy defeated " + str(
-                    #             self.pure_mcts_play_out_number) + " play out MCTS player ")
-                    #         self.best_win_ratio = 0.0
-                    #         self.pure_mcts_play_out_number += 1000
+                    _, _ = self.policy_update()
+                    self.policy_value_net.save_model('./new_policy.model')
+                for i in range(self.game_batch_number):
+                    if os.path.exists("done"):
+                        break
+                    start_time = time.time()
+                    self.collect_self_play_data()
+                    print_log(
+                        "batch i:{}, episode_len:{}, in:{}".format(i + 1 + self.last_batch_number, self.episode_length,
+                                                                   time.time() - start_time))
+                    if len(self.data_buffer) > self.batch_size:
+                        loss, entropy = self.policy_update()
+                        data_log(str((i + 1 + self.last_batch_number, loss, entropy)))
+                    if (i + 1) % self.check_freq == 0:
+                        print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
+                        self.policy_value_net.save_model('./current_policy.model' + str(i + 1))
 
         except KeyboardInterrupt:
             pass

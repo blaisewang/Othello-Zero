@@ -5,7 +5,9 @@ An implementation of the game interface
 """
 
 import copy
+import os
 import pickle
+import subprocess
 import threading
 
 import numpy as np
@@ -13,8 +15,8 @@ import wx
 
 from game import Board
 
-# from mcts_alphaZero import MCTSPlayer
-# from policy_value_net import PolicyValueNet
+from mcts_alphaZero import MCTSPlayer
+from policy_value_net import PolicyValueNet
 
 N = 8
 WIN_WIDTH = 800
@@ -47,6 +49,9 @@ class OthelloFrame(wx.Frame):
     row_list = []
     column_list = []
     chess_record = []
+    states = []
+    current_players = []
+    mcts_probabilities = []
     row_name_list = ['15', '14', '13', '12', '11', '10', ' 9', ' 8', ' 7', ' 6', ' 5', ' 4', ' 3', ' 2', ' 1']
     column_name_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P']
 
@@ -109,9 +114,9 @@ class OthelloFrame(wx.Frame):
         self.white_button.SetFont(image_font)
         self.replay_button.Disable()
         try:
-            policy_param = pickle.load(open('best.model', 'rb'), encoding='bytes')
-            # self.mcts_player = MCTSPlayer(PolicyValueNet(self.n, net_params=policy_param).policy_value_func, c_puct=5,
-            #                               n_play_out=400)
+            self.policy_value_net = PolicyValueNet(self.n, model_file='./current_policy.model150')
+            self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=5, n_play_out=400)
+
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
@@ -129,6 +134,9 @@ class OthelloFrame(wx.Frame):
             self.current_move = 0
             self.has_set_ai_player = False
             self.chess_record.clear()
+            self.states = []
+            self.current_players = []
+            self.mcts_probabilities = []
             self.draw_board()
             self.draw_chess()
             self.replay_button.Disable()
@@ -141,13 +149,11 @@ class OthelloFrame(wx.Frame):
     def on_black_button_click(self, _):
         self.black_button.Disable()
         self.white_button.Disable()
-        self.black_button.SetLabel("√")
         self.has_set_ai_player = True
 
     def on_white_button_click(self, _):
         self.black_button.Disable()
         self.white_button.Disable()
-        self.white_button.SetLabel("√")
         self.has_set_ai_player = True
         self.thread = threading.Thread(target=self.ai_next_move, args=())
         self.thread.start()
@@ -179,10 +185,16 @@ class OthelloFrame(wx.Frame):
         move, move_probabilities = self.mcts_player.get_action(self.board)
         x, y = self.board.move_to_location(move)
         self.board.add_move(x, y)
+        self.flatten(move_probabilities)
         if self.is_analysis_displayed:
             self.repaint_board()
         self.analysis_button.Enable()
         self.draw_move(y, x)
+
+    def flatten(self, move_probabilities):
+        self.states.append(self.board.get_current_state())
+        self.mcts_probabilities.append(move_probabilities)
+        self.current_players.append(self.board.get_current_player())
 
     def disable_buttons(self):
         if self.board.has_winner() != -1:
@@ -262,6 +274,18 @@ class OthelloFrame(wx.Frame):
         self.draw_chess()
         winner = self.board.has_winner()
         if winner != -1:
+            winners_z = np.zeros(len(self.current_players))
+            winners_z[np.array(self.current_players) == winner] = 1.0
+            winners_z[np.array(self.current_players) != winner] = -1.0
+            if os.path.exists('play.data'):
+                with open('play.data', 'rb') as file:
+                    zip_list = pickle.load(file)
+            else:
+                zip_list = []
+            with open('play.data', 'rb') as file:
+                zip_list.append(zip(self.states, self.mcts_probabilities, winners_z))
+                pickle.dump(zip_list, file, pickle.HIGHEST_PROTOCOL)
+                subprocess.call(["python", "train_play.py"])
             self.disable_buttons()
             self.draw_banner(winner)
             return True
