@@ -36,7 +36,6 @@ class OthelloFrame(wx.Frame):
     current_move = 0
     has_set_ai_player = False
     is_banner_displayed = False
-    is_analysis_displayed = False
 
     block_length = int((WIN_HEIGHT - 90) / N)
     piece_radius = (block_length >> 1) - 3
@@ -76,7 +75,7 @@ class OthelloFrame(wx.Frame):
             self.column_list.append(
                 (i + self.grid_position_x, self.grid_position_y + self.grid_length + COLUMN_LIST_MARGIN))
 
-        wx.Frame.__init__(self, None, title="Non-Internet Reversi",
+        wx.Frame.__init__(self, None, title="Othello Zero",
                           pos=((wx.DisplaySize()[0] - WIN_WIDTH) >> 1, (wx.DisplaySize()[1] - WIN_HEIGHT) / 2.5),
                           size=(WIN_WIDTH, WIN_HEIGHT), style=wx.CLOSE_BOX)
         button_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False)
@@ -96,36 +95,29 @@ class OthelloFrame(wx.Frame):
         self.ai_hint_button = wx.Button(self, label="Hint",
                                         pos=(self.button_position_x, self.grid_position_y + 3 * BUTTON_HEIGHT_MARGIN),
                                         size=(BUTTON_WIDTH, BUTTON_HEIGHT))
-        self.analysis_button = wx.Button(self, label="Analysis",
-                                         pos=(self.button_position_x, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN),
-                                         size=(BUTTON_WIDTH, BUTTON_HEIGHT))
         self.black_text = wx.StaticText(self, label="●", pos=(
-            self.button_position_x + 25, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
+            self.button_position_x + 25, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.black_number = wx.StaticText(self, label="", pos=(
-            self.button_position_x + 50, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
+            self.button_position_x + 50, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.white_text = wx.StaticText(self, label="○", pos=(
-            self.button_position_x + 85, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
+            self.button_position_x + 85, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.white_number = wx.StaticText(self, label="", pos=(
-            self.button_position_x + 110, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
+            self.button_position_x + 110, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.replay_button.SetFont(button_font)
         self.ai_hint_button.SetFont(button_font)
-        self.analysis_button.SetFont(button_font)
         self.black_button.SetFont(image_font)
         self.white_button.SetFont(image_font)
         self.replay_button.Disable()
         try:
-            self.policy_value_net = PolicyValueNet(self.n, model_file='./current_policy.model150')
+            self.policy_value_net = PolicyValueNet(self.n, model_file='./current_policy.model')
             self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=5, n_play_out=400)
-
             self.black_button.Enable()
             self.white_button.Enable()
             self.ai_hint_button.Enable()
-            self.analysis_button.Enable()
         except IOError as _:
             self.black_button.Disable()
             self.white_button.Disable()
             self.ai_hint_button.Disable()
-            self.analysis_button.Disable()
         self.initialize_user_interface()
 
     def on_replay_button_click(self, _):
@@ -144,7 +136,6 @@ class OthelloFrame(wx.Frame):
                 self.black_button.Enable()
                 self.white_button.Enable()
                 self.ai_hint_button.Enable()
-                self.analysis_button.Enable()
 
     def on_black_button_click(self, _):
         self.black_button.Disable()
@@ -164,15 +155,6 @@ class OthelloFrame(wx.Frame):
             self.white_button.Disable()
             self.ai_next_move()
 
-    def on_analysis_button_click(self, _):
-        if not self.thread.is_alive():
-            moves, probability = copy.deepcopy(self.mcts_player).get_action(self.board, return_probability=1)
-            move_list = [(moves[i], p) for i, p in enumerate(probability) if p > 0]
-            if len(move_list) > 0:
-                self.draw_possible_moves(move_list)
-                self.is_analysis_displayed = True
-                self.analysis_button.Disable()
-
     def on_paint(self, _):
         dc = wx.PaintDC(self)
         dc.SetBackground(wx.Brush(wx.WHITE_BRUSH))
@@ -186,9 +168,6 @@ class OthelloFrame(wx.Frame):
         x, y = self.board.move_to_location(move)
         self.board.add_move(x, y)
         self.flatten(move_probabilities)
-        if self.is_analysis_displayed:
-            self.repaint_board()
-        self.analysis_button.Enable()
         self.draw_move(y, x)
 
     def flatten(self, move_probabilities):
@@ -199,7 +178,6 @@ class OthelloFrame(wx.Frame):
     def disable_buttons(self):
         if self.board.has_winner() != -1:
             self.ai_hint_button.Disable()
-            self.analysis_button.Disable()
 
     def initialize_user_interface(self):
         self.board = Board(self.n)
@@ -209,7 +187,6 @@ class OthelloFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.on_black_button_click, self.black_button)
         self.Bind(wx.EVT_BUTTON, self.on_white_button_click, self.white_button)
         self.Bind(wx.EVT_BUTTON, self.on_ai_hint_button_click, self.ai_hint_button)
-        self.Bind(wx.EVT_BUTTON, self.on_analysis_button_click, self.analysis_button)
         self.Centre()
         self.Show(True)
 
@@ -217,7 +194,6 @@ class OthelloFrame(wx.Frame):
         self.draw_board()
         self.draw_chess()
         self.is_banner_displayed = False
-        self.is_analysis_displayed = False
 
     def draw_board(self):
         dc = wx.ClientDC(self)
@@ -318,8 +294,6 @@ class OthelloFrame(wx.Frame):
     def on_click(self, e):
         if not self.thread.is_alive():
             if self.board.winner == -1:
-                if self.is_analysis_displayed:
-                    self.repaint_board()
                 x, y = e.GetPosition()
                 x = x - self.grid_position_x + (self.block_length >> 1)
                 y = y - self.grid_position_y + (self.block_length >> 1)
@@ -331,7 +305,6 @@ class OthelloFrame(wx.Frame):
                             if self.board.location_to_move(y, x) in self.board.get_available_moves(
                                     self.board.get_current_player()):
                                 if self.mcts_player is not None:
-                                    self.analysis_button.Enable()
                                     self.black_button.Disable()
                                     self.white_button.Disable()
                                 self.board.add_move(y, x)
