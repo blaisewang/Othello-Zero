@@ -158,18 +158,17 @@ class TrainPipeline:
                 # check the performance of the current model，and save the model params
                 if (i + 1) % self.check_freq == 0:
                     print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
-                    start_time = time.time()
-                    win_ratio = self.policy_evaluate()
-                    self.policy_value_net.save_model('./current_policy.model')
-                    print_log(str(time.time() - start_time))
-                    if win_ratio > self.best_win_ratio:
-                        self.best_win_ratio = win_ratio
-                        self.policy_value_net.save_model('./best_policy.model')
-                        if self.best_win_ratio >= 0.8:
-                            print_log("New best policy defeated " + str(
-                                self.pure_mcts_play_out_number) + " play out MCTS player ")
-                            self.best_win_ratio = 0.0
-                            self.pure_mcts_play_out_number += 1000
+                    # win_ratio = self.policy_evaluate()
+                    self.policy_value_net.save_model('./current_policy.model' + str(i + 1))
+                    # print_log(str(time.time() - start_time))
+                    # if win_ratio > self.best_win_ratio:
+                    #     self.best_win_ratio = win_ratio
+                    #     self.policy_value_net.save_model('./best_policy.model')
+                    #     if self.best_win_ratio >= 0.8:
+                    #         print_log("New best policy defeated " + str(
+                    #             self.pure_mcts_play_out_number) + " play out MCTS player ")
+                    #         self.best_win_ratio = 0.0
+                    #         self.pure_mcts_play_out_number += 1000
 
         except KeyboardInterrupt:
             pass
