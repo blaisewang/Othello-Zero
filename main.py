@@ -94,6 +94,14 @@ class OthelloFrame(wx.Frame):
         self.analysis_button = wx.Button(self, label="Analysis",
                                          pos=(self.button_position_x, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN),
                                          size=(BUTTON_WIDTH, BUTTON_HEIGHT))
+        self.black_text = wx.StaticText(self, label="●", pos=(
+            self.button_position_x + 35, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+        self.black_number = wx.StaticText(self, label="", pos=(
+            self.button_position_x + 100, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+        self.white_text = wx.StaticText(self, label="○", pos=(
+            self.button_position_x + 35, self.grid_position_y + 6 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+        self.white_number = wx.StaticText(self, label="", pos=(
+            self.button_position_x + 100, self.grid_position_y + 6 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
         self.replay_button.SetFont(button_font)
         self.ai_hint_button.SetFont(button_font)
         self.analysis_button.SetFont(button_font)
@@ -163,6 +171,7 @@ class OthelloFrame(wx.Frame):
         dc.Clear()
         self.draw_board()
         self.draw_chess()
+        self.update_number()
 
     def ai_next_move(self):
         move, move_probabilities = self.mcts_player.get_action(self.board)
@@ -275,6 +284,11 @@ class OthelloFrame(wx.Frame):
         dc.DrawText(string, x, (self.grid_position_y + ((self.grid_length - 40) >> 1)))
         self.is_banner_displayed = True
 
+    def update_number(self):
+        black, white = self.board.get_color_number()
+        self.black_number.SetLabel(str(black))
+        self.white_number.SetLabel(str(white))
+
     def on_click(self, e):
         if not self.thread.is_alive():
             if self.board.winner == -1:
@@ -297,6 +311,7 @@ class OthelloFrame(wx.Frame):
                                 self.board.add_move(y, x)
                                 has_end = self.draw_move(x, y)
                                 self.replay_button.Enable()
+                                self.update_number()
                                 if self.has_set_ai_player and not has_end:
                                     self.thread = threading.Thread(target=self.ai_next_move, args=())
                                     self.thread.start()

@@ -122,6 +122,14 @@ class Board:
     def get_opponent_player(self) -> int:
         return 2 if self.round % 2 == 0 else 1
 
+    def get_color_number(self) -> (int, int):
+        white = 0
+        black = 0
+        for x, y in list(itertools.product(range(self.n), range(self.n))):
+            black += 1 if self.chess[x, y] == 1 else 0
+            white += 1 if self.chess[x, y] == 2 else 0
+        return black, white
+
     def has_winner(self):
         if len(self.get_available_moves(self.get_current_player())):
             return -1
@@ -130,11 +138,7 @@ class Board:
             if len(self.get_available_moves(self.get_opponent_player())):
                 return -1
             else:
-                white = 0
-                black = 0
-                for x, y in itertools.product(range(self.n), range(self.n)):
-                    black += 1 if self.chess[x, y] == 1 else 0
-                    white += 1 if self.chess[x, y] == 2 else 0
+                black, white = self.get_color_number()
                 self.winner = 1 if black > white else 2 if black < white else 0
                 return self.winner
 
