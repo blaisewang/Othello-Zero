@@ -95,13 +95,13 @@ class OthelloFrame(wx.Frame):
                                          pos=(self.button_position_x, self.grid_position_y + 4 * BUTTON_HEIGHT_MARGIN),
                                          size=(BUTTON_WIDTH, BUTTON_HEIGHT))
         self.black_text = wx.StaticText(self, label="●", pos=(
-            self.button_position_x + 35, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+            self.button_position_x + 25, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.black_number = wx.StaticText(self, label="", pos=(
-            self.button_position_x + 100, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+            self.button_position_x + 50, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.white_text = wx.StaticText(self, label="○", pos=(
-            self.button_position_x + 35, self.grid_position_y + 6 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+            self.button_position_x + 85, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.white_number = wx.StaticText(self, label="", pos=(
-            self.button_position_x + 100, self.grid_position_y + 6 * BUTTON_HEIGHT_MARGIN + 10), size=wx.Size(100, 20))
+            self.button_position_x + 110, self.grid_position_y + 5 * BUTTON_HEIGHT_MARGIN + 20), size=wx.Size(100, 30))
         self.replay_button.SetFont(button_font)
         self.ai_hint_button.SetFont(button_font)
         self.analysis_button.SetFont(button_font)
@@ -141,11 +141,13 @@ class OthelloFrame(wx.Frame):
     def on_black_button_click(self, _):
         self.black_button.Disable()
         self.white_button.Disable()
+        self.black_button.SetLabel("√")
         self.has_set_ai_player = True
 
     def on_white_button_click(self, _):
         self.black_button.Disable()
         self.white_button.Disable()
+        self.white_button.SetLabel("√")
         self.has_set_ai_player = True
         self.thread = threading.Thread(target=self.ai_next_move, args=())
         self.thread.start()
