@@ -17,15 +17,16 @@ from mcts_treenode import TreeNode
 def roll_out_policy_func(board: 'Board'):
     """roll_out_policy_func -- a coarse, fast version of policy_fn used in the roll out phase."""
     # roll out randomly
-    return zip(board.get_available_moves(), np.random.rand(len(board.get_available_moves())))
+    return zip(board.get_available_moves(board.get_current_player()),
+               np.random.rand(len(board.get_available_moves(board.get_current_player()))))
 
 
 def policy_value_func(board: 'Board'):
     """a function that takes in a state and outputs a list of (action, probabilities)
     tuples and a score for the state"""
     # return uniform probabilities and 0 score for pure MCTS
-    return zip(board.get_available_moves(),
-               np.ones(len(board.get_available_moves())) / len(board.get_available_moves())), 0
+    return zip(board.get_available_moves(board.get_current_player()), np.ones(len(board.get_available_moves())) / len(
+        board.get_available_moves(board.get_current_player()))), 0
 
 
 class MCTS:
@@ -116,7 +117,7 @@ class MCTSPlayer:
         self.mcts = MCTS(policy_value_func, c_puct, n_play_out)
 
     def get_action(self, board: 'Board'):
-        if board.get_move_number() < board.n * board.n:
+        if board.winner == -1:
             move = self.mcts.get_move(board)
             self.mcts.update_with_move(-1)
             return move

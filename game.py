@@ -3,6 +3,7 @@ An implementation of the game and the game board
 
 @author: Blaise Wang
 """
+import itertools
 
 import numpy as np
 
@@ -17,20 +18,47 @@ def to_list(p1: int, p2: int, n: int) -> []:
 class Board:
     def __init__(self, n: int):
         self.n = n
+        self.round = 0
         self.winner = -1
         self.move_list = []
         self.chess = np.repeat(0, self.n * self.n).reshape(self.n, self.n)
+        self.initialize_moves()
+
+    def initialize_moves(self):
+        self.add_move(3, 4)
+        self.add_move(3, 3)
+        self.add_move(4, 3)
+        self.add_move(4, 4)
 
     def initialize(self):
+        self.round = 0
         self.winner = -1
         self.move_list = []
         self.chess[0:self.n, 0:self.n] = 0
+        self.initialize_moves()
 
     def add_move(self, x: int, y: int):
+        self.round += 1
         self.move_list.append((x, y))
-        self.chess[x, y] = 2 if self.get_move_number() % 2 == 0 else 1
+        self.chess[x, y] = 2 if self.round % 2 == 0 else 1
+
+        directions = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]]
+        for dx, dy in directions:
+            tx, ty = x, y
+            while self.in_board(tx + dx, ty + dy):
+                tx += dx
+                ty += dy
+                if self.chess[tx, ty] == 0:
+                    break
+                if self.chess[tx, ty] == self.get_opponent_player():
+                    while tx - dx != x or ty - dy != y:
+                        tx -= dx
+                        ty -= dy
+                        self.chess[tx, ty] = 1 if self.get_opponent_player() == 1 else 2
+                    break
 
     def remove_move(self):
+        self.round -= 1
         x, y = self.move_list.pop()
         self.chess[x, y] = 0
 
@@ -42,12 +70,32 @@ class Board:
     def location_to_move(self, x: int, y: int) -> int:
         return (self.n - x - 1) * self.n + y
 
-    def get_available_moves(self) -> []:
+    def in_board(self, pos_x, pos_y):
+        if pos_x < 0 or pos_y < 0 or pos_x >= self.n or pos_y >= self.n:
+            return False
+        return True
+
+    def get_available_moves(self, player):
         potential_move_list = []
-        for (x, y), value in np.ndenumerate(self.chess):
-            if not value:
-                potential_move_list.append(self.location_to_move(x, y))
-        return sorted(potential_move_list)
+        directions = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]]
+        for x, y in list(itertools.product(range(self.n), range(self.n))):
+            if self.chess[x, y] != 0:
+                continue
+            for dx, dy in directions:
+                flag = False
+                tx, ty = x, y
+                while self.in_board(tx + dx, ty + dy):
+                    tx += dx
+                    ty += dy
+                    if self.chess[tx, ty] == 0:
+                        break
+                    if abs(player - self.chess[tx, ty]) == 1:
+                        flag = True
+                    else:
+                        if flag:
+                            potential_move_list.append(self.location_to_move(x, y))
+                        break
+        return list(set(potential_move_list))
 
     def get_current_state(self):
         player = self.get_current_player()
@@ -69,18 +117,26 @@ class Board:
         return len(self.move_list)
 
     def get_current_player(self) -> int:
-        return 1 if self.get_move_number() % 2 == 0 else 2
+        return 1 if self.round % 2 == 0 else 2
+
+    def get_opponent_player(self) -> int:
+        return 2 if self.round % 2 == 0 else 1
 
     def has_winner(self):
-
-        """
-        黑胜返回1
-        白胜返回2
-        平局返回0
-        未结束返回-1
-        """
-
-        return -1
+        if len(self.get_available_moves(self.get_current_player())):
+            return -1
+        else:
+            self.round += 1
+            if len(self.get_available_moves(self.get_opponent_player())):
+                return -1
+            else:
+                white = 0
+                black = 0
+                for x, y in itertools.product(range(self.n), range(self.n)):
+                    black += 1 if self.chess[x, y] == 1 else 0
+                    white += 1 if self.chess[x, y] == 2 else 0
+                self.winner = 1 if black > white else 2 if black < white else 0
+                return self.winner
 
 
 class Game:
@@ -92,9 +148,9 @@ class Game:
         if index % 2:
             player1, player2 = player2, player1
         self.board.initialize()
-        while self.board.get_move_number() < self.board.n * self.board.n:
+        while self.board.winner == -1:
             player_in_turn = player1 if self.board.get_current_player() == 1 else player2
-            move = player_in_turn.get_action(self.board)
+            move, _ = player_in_turn.get_action(self.board)
             x, y = self.board.move_to_location(move)
             self.board.add_move(x, y)
             winner = self.board.has_winner()
@@ -110,8 +166,8 @@ class Game:
         """
         self.board.initialize()
         states, mcts_probabilities, current_players = [], [], []
-        while self.board.get_move_number() < self.board.n * self.board.n:
-            move, move_probabilities = player.get_action(self.board, temp=temp, return_probability=1)
+        while self.board.winner == -1:
+            move, move_probabilities = player.get_action(self.board, temp=temp)
             # store the data
             states.append(self.board.get_current_state())
             mcts_probabilities.append(move_probabilities)
