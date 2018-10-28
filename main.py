@@ -273,7 +273,7 @@ class OthelloFrame(wx.Frame):
         self.chess_record.append((x, y))
         self.draw_chess()
         winner = self.board.has_winner()
-        if winner != -1:
+        if winner != -1 and len(self.states) > 0:
             winners_z = np.zeros(len(self.current_players))
             winners_z[np.array(self.current_players) == winner] = 1.0
             winners_z[np.array(self.current_players) != winner] = -1.0

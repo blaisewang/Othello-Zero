@@ -170,7 +170,7 @@ class TrainPipeline:
                         data_log(str((i + 1 + self.last_batch_number, loss, entropy)))
                     if (i + 1) % self.check_freq == 0:
                         print_log("current self-play batch: {}".format(i + 1 + self.last_batch_number))
-                        self.policy_value_net.save_model('./current_policy.model' + str(i + 1))
+                        self.policy_value_net.save_model('./current_policy.model')
 
         except KeyboardInterrupt:
             pass
