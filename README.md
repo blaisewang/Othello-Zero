@@ -2,7 +2,7 @@
 
 The project was developed for HackSheffield 4.0.
 
-If your company has international job opportunities, please consider hire the lead programmer.
+If your company has international job opportunities, please consider hiring the lead programmer.
 
 
 ## Documentation
