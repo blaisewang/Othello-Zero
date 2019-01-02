@@ -108,7 +108,7 @@ class OthelloFrame(wx.Frame):
         self.white_button.SetFont(image_font)
         self.replay_button.Disable()
         try:
-            self.policy_value_net = PolicyValueNet(self.n, model_file='./current_policy.model')
+            self.policy_value_net = PolicyValueNet(self.n, model_file='./models/current_policy.model300')
             self.mcts_player = MCTSPlayer(self.policy_value_net.policy_value_func, c_puct=5, n_play_out=400)
             self.black_button.Enable()
             self.white_button.Enable()
