@@ -4,9 +4,6 @@ An implementation of the game interface
 @author: Blaise Wang
 """
 
-import os
-import pickle
-import subprocess
 import threading
 
 import numpy as np
@@ -250,18 +247,6 @@ class OthelloFrame(wx.Frame):
         self.draw_chess()
         winner = self.board.has_winner()
         if winner != -1 and len(self.states) > 0:
-            # winners_z = np.zeros(len(self.current_players))
-            # winners_z[np.array(self.current_players) == winner] = 1.0
-            # winners_z[np.array(self.current_players) != winner] = -1.0
-            # if os.path.exists('play.data'):
-            #     with open('play.data', 'rb') as file:
-            #         zip_list = pickle.load(file)
-            # else:
-            #     zip_list = []
-            # with open('play.data', 'rb') as file:
-            #     zip_list.append(zip(self.states, self.mcts_probabilities, winners_z))
-            #     pickle.dump(zip_list, file, pickle.HIGHEST_PROTOCOL)
-            #     subprocess.call(["python", "train_play.py"])
             self.disable_buttons()
             self.draw_banner(winner)
             return True

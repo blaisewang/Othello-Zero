@@ -10,11 +10,6 @@ import numpy as np
 from mcts_alphaZero import MCTSPlayer
 
 
-def to_list(p1: int, p2: int, n: int) -> []:
-    c = [((p1 ^ (p1 >> 1)) >> k) & 1 for k in range(0, n >> 1)][::-1]
-    return c + [((p2 ^ (p2 >> 1)) >> k) & 1 for k in range(0, n - (n >> 1))][::-1]
-
-
 class Board:
     def __init__(self, n: int):
         self.n = n
